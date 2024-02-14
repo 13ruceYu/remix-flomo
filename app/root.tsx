@@ -8,8 +8,11 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
+import mainCss from './main.css'
+import {NextUIProvider} from "@nextui-org/react";
 
 export const links: LinksFunction = () => [
+  {rel: 'stylesheet', href: mainCss},
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
 ];
 
@@ -23,7 +26,9 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <Outlet />
+        <NextUIProvider>
+          <Outlet />
+        </NextUIProvider>
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
