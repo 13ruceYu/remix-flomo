@@ -1,6 +1,6 @@
 import { Button, Card, CardBody, CardFooter, CardHeader, Textarea } from "@nextui-org/react";
-import { ActionFunctionArgs, json } from "@remix-run/node";
-import { Form, useFetcher, useLoaderData } from "@remix-run/react";
+import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/node";
+import { Form, useFetcher, useLoaderData, useSearchParams } from "@remix-run/react";
 import { prisma } from "~/prisma.server";
 import dayjs from 'dayjs'
 import { Note } from "@prisma/client";
@@ -9,35 +9,76 @@ import React from "react";
 export async function action(c: ActionFunctionArgs) {
   const formData = await c.request.formData()
   const content = formData.get("content") as string
-  console.log({ content })
+
+  const tagReg = new RegExp(/#[^ ]+/g)
+  const tags = content.match(tagReg)?.map(tag => tag.slice(1))
+
   if (!content) {
     throw new Response("content is required", { status: 400 })
   }
   await prisma.note.create({
     data: {
-      content
+      content,
+      tags: {
+        connectOrCreate: tags?.map(tag => {
+          return {
+            where: {
+              title: tag
+            },
+            create: {
+              title: tag
+            }
+          }
+        })
+      }
     }
   })
   return json({})
 }
 
-export async function loader() {
-  const notes = await prisma.note.findMany({
-    orderBy: {
-      createdAt: 'desc'
-    }
-  })
+export async function loader(c: LoaderFunctionArgs) {
+  const searchParams = new URL(c.request.url).searchParams
+  const tag = searchParams.get('tag') as string
+  const [notes, tags] = await prisma.$transaction([
+    prisma.note.findMany({
+      ...(tag ? {
+        where: {
+          tags: {
+            some: {
+              title: tag
+            }
+          }
+        }
+      } : {}),
+      orderBy: {
+        createdAt: 'desc'
+      }
+    }),
+    prisma.tag.findMany()
+  ])
 
-  return json({ notes })
+  return json({ notes, tags })
 }
 
 export default function Page() {
   const loaderData = useLoaderData<typeof loader>()
+  const [searchParams, setSearchParams] = useSearchParams()
   return (
     <div className="max-w-[600px] m-auto">
       <nav>navbar</nav>
-      <div className="main flex">
-        <aside className="w-[100px]">aside</aside>
+      <div className="main flex gap-3">
+        <aside className="w-[160px]">
+          <div>我的标签</div>
+          <div className="flex flex-col gap-3">
+            {loaderData.tags.map(tag => {
+              return (
+                <Button onClick={_ => { setSearchParams({ tag: tag.title }) }} variant="light" className="justify-start" key={tag.title}>
+                  {tag.title}
+                </Button>
+              )
+            })}
+          </div>
+        </aside>
         <main className="flex-1">
           <Form method="POST" className="mb-8">
             <div className="flex flex-col gap-3">
