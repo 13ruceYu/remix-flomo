@@ -64,6 +64,7 @@ export default function Page() {
 function NoteBody(props: { note: Note }) {
   const [isEditing, setIsEditing] = React.useState(false)
   const fetcher = useFetcher()
+  const deleteFetcher = useFetcher()
   const isUpdating = fetcher.state === 'submitting'
   return (
     <Card className="mb-4">
@@ -84,7 +85,12 @@ function NoteBody(props: { note: Note }) {
         }
       </CardBody>
       <CardFooter>
-        <Button size="sm" variant="flat" onClick={_ => setIsEditing(!isEditing)}>编辑</Button>
+        <div className="flex gap-3">
+          <Button size="sm" variant="flat" onClick={_ => setIsEditing(!isEditing)}>编辑</Button>
+          <deleteFetcher.Form method="post" action={`/mine/${props.note.id}/delete`}>
+            <Button type="submit" size="sm" variant="flat" color="danger">删除</Button>
+          </deleteFetcher.Form>
+        </div>
       </CardFooter>
     </Card>
   )
