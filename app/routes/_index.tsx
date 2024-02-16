@@ -1,5 +1,6 @@
 import type { MetaFunction } from "@remix-run/node";
-import {Button} from "@nextui-org/react";
+import { Button } from "@nextui-org/react";
+import { prisma } from '../prisma.server'
 
 export const meta: MetaFunction = () => {
   return [
