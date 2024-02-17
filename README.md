@@ -1,4 +1,4 @@
-# Welcome to Remix!
+# Welcome to Remix
 
 - [Remix Docs](https://remix.run/docs)
 
@@ -36,3 +36,12 @@ Make sure to deploy the output of `remix build`
 
 - `build/`
 - `public/build/`
+
+### Prisma
+
+```sh
+# show GUI
+npx prisma studio
+
+# update database
+```

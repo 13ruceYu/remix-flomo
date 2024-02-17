@@ -1,10 +1,11 @@
 import { Button, Card, CardBody, CardFooter, CardHeader, Textarea } from "@nextui-org/react";
-import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/node";
+import { ActionFunctionArgs, LoaderFunctionArgs, json, redirect } from "@remix-run/node";
 import { Form, useFetcher, useLoaderData, useSearchParams } from "@remix-run/react";
 import { prisma } from "~/prisma.server";
 import dayjs from 'dayjs'
 import { Note } from "@prisma/client";
 import React from "react";
+import { auth } from "~/session";
 
 export async function action(c: ActionFunctionArgs) {
   const formData = await c.request.formData()
@@ -37,6 +38,10 @@ export async function action(c: ActionFunctionArgs) {
 }
 
 export async function loader(c: LoaderFunctionArgs) {
+  const userId = await auth(c.request)
+  if (!userId) {
+    return redirect('/login')
+  }
   const searchParams = new URL(c.request.url).searchParams
   const tag = searchParams.get('tag') as string
   const [notes, tags] = await prisma.$transaction([
@@ -57,7 +62,7 @@ export async function loader(c: LoaderFunctionArgs) {
     prisma.tag.findMany()
   ])
 
-  return json({ notes, tags })
+  return json({ notes, tags, userId })
 }
 
 export default function Page() {
@@ -65,7 +70,10 @@ export default function Page() {
   const [searchParams, setSearchParams] = useSearchParams()
   return (
     <div className="max-w-[600px] m-auto">
-      <nav>navbar</nav>
+      <nav className="flex justify-between py-3">
+        <div>nav</div>
+        <div className="text-sm text-gray-600">用户 ID: {loaderData.userId}</div>
+      </nav>
       <div className="main flex gap-3">
         <aside className="w-[160px]">
           <div>我的标签</div>
